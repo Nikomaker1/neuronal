@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorador de Redes Neuronales</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .section {
+            display: none;
+            animation: slideIn 0.5s ease-in-out;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        h2 {
+            color: #FFD700;
+            font-size: 2em;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .neuron-visual {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .neuron {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #FFD700, #FFA500);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 10px;
+            border: 3px solid #fff;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .neuron:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+        }
+        
+        .neuron.active {
+            background: radial-gradient(circle, #00FF00, #32CD32);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .connection {
+            height: 4px;
+            background: #ccc;
+            margin: 0 10px;
+            border-radius: 2px;
+            transition: all 0.5s ease;
+            min-width: 50px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .connection.strong {
+            background: #00FF00;
+            box-shadow: 0 0 10px #00FF00;
+        }
+        
+        .connection.weak {
+            background: #FF6B6B;
+            box-shadow: 0 0 10px #FF6B6B;
+        }
+        
+        .connection::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .connection.active::after {
+            left: 100%;
+        }
+        
+        .controls {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .slider-group {
+            margin: 15px 0;
+        }
+        
+        .slider-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            margin: 10px 0;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #FFD700;
+            cursor: pointer;
+            border: 2px solid #fff;
+        }
+        
+        .empanada-example {
+            background: rgba(255, 165, 0, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #FFA500;
+        }
+        
+        .result-display {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #FFD700, #FFA500);
+            border: none;
+            border-radius: 25px;
+            padding: 15px 30px;
+            color: #333;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .canvas-area {
+            background: white;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        #drawCanvas {
+            border: 2px solid #333;
+            border-radius: 10px;
+            cursor: crosshair;
+        }
+        
+        .progress-bar {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            height: 20px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #00FF00, #32CD32);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+        
+        .explanation-box {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #FFD700;
+        }
+        
+        .navigation {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .neuron-visual {
+                flex-direction: column;
+            }
+            
+            .connection {
+                width: 4px;
+                height: 30px;
+                min-width: auto;
+            }
+            
+            h1 { font-size: 2em; }
+            h2 { font-size: 1.5em; }
+            .container { padding: 15px; }
+        }
+        
+        .layer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 20px;
+        }
+        
+        .layer-label {
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            color: #FFD700;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 ¡Descubre las Redes Neuronales! 🤖</h1>
+        
+        <!-- Sección 1: ¿Qué es una neurona? -->
+        <div class="section active" id="section1">
+            <h2>🔥 ¿Qué es una Neurona Artificial?</h2>
+            
+            <div class="explanation-box">
+                <p>¡Imagínate que una neurona es como un amigo súper inteligente que puede tomar decisiones!</p>
+                <p>👂 <strong>Escucha:</strong> Recibe información de sus amigos</p>
+                <p>🤔 <strong>Piensa:</strong> Procesa toda esa información</p>
+                <p>💬 <strong>Decide:</strong> Da una respuesta o decisión</p>
+            </div>
+            
+            <div class="neuron-visual">
+                <div class="layer">
+                    <div class="layer-label">Información que llega</div>
+                    <div style="display: flex; flex-direction: column;">
+                        <div class="neuron" onclick="activateNeuron('input1')">🌤️</div>
+                        <div class="neuron" onclick="activateNeuron('input2')">🕐</div>
+                        <div class="neuron" onclick="activateNeuron('input3')">📍</div>
+                    </div>
+                </div>
+                
+                <div class="connection" id="conn1"></div>
+                <div class="connection" id="conn2"></div>
+                <div class="connection" id="conn3"></div>
+                
+                <div class="layer">
+                    <div class="layer-label">Neurona Pensante</div>
+                    <div class="neuron" id="mainNeuron">🧠</div>
+                </div>
+                
+                <div class="connection" id="outputConn"></div>
+                
+                <div class="layer">
+                    <div class="layer-label">Decisión Final</div>
+                    <div class="neuron" id="outputNeuron">❓</div>
+                </div>
+            </div>
+            
+            <div class="explanation-box">
+                <p><strong>¡Prueba haciendo clic en las neuronas de entrada!</strong></p>
+                <p>🌤️ = ¿Está soleado? | 🕐 = ¿Qué hora es? | 📍 = ¿Dónde estamos?</p>
+            </div>
+            
+            <div class="navigation">
+                <button class="btn" onclick="nextSection()">Siguiente: El Vendedor de Empanadas 🥟</button>
+            </div>
+        </div>
+        
+        <!-- Sección 2: Ejemplo del vendedor de empanadas -->
+        <div class="section" id="section2">
+            <h2>🥟 Juan el Vendedor de Empanadas</h2>
+            
+            <div class="explanation-box">
+                <p><strong>Conoce a Juan:</strong> Vende empanadas en la calle y quiere saber cuánto cobrar según sus ingredientes y dónde está vendiendo.</p>
+                <p>Su cerebrito artificial le va a ayudar a decidir el precio perfecto! 💰</p>
+            </div>
+            
+            <div class="empanada-example">
+                <div class="controls">
+                    <div class="slider-group">
+                        <label>🥩 Cantidad de Carne (1-10):</label>
+                        <input type="range" id="meat" min="1" max="10" value="5" oninput="updateEmpanada()">
+                        <span id="meatValue">5</span>
+                    </div>
+                    
+                    <div class="slider-group">
+                        <label>🧀 Cantidad de Queso (1-10):</label>
+                        <input type="range" id="cheese" min="1" max="10" value="3" oninput="updateEmpanada()">
+                        <span id="cheeseValue">3</span>
+                    </div>
+                    
+                    <div class="slider-group">
+                        <label>📍 Zona (1=Popular, 10=Exclusiva):</label>
+                        <input type="range" id="zone" min="1" max="10" value="5" oninput="updateEmpanada()">
+                        <span id="zoneValue">5 - Zona Media</span>
+                    </div>
+                </div>
+                
+                <div class="neuron-visual">
+                    <div class="layer">
+                        <div class="layer-label">Ingredientes + Zona</div>
+                        <div class="neuron" id="meatNeuron">🥩</div>
+                        <div class="neuron" id="cheeseNeuron">🧀</div>
+                        <div class="neuron" id="zoneNeuron">📍</div>
+                    </div>
+                    
+                    <div class="connection" id="meatConn"></div>
+                    <div class="connection" id="cheeseConn"></div>
+                    <div class="connection" id="zoneConn"></div>
+                    
+                    <div class="layer">
+                        <div class="layer-label">Cerebrito de Juan</div>
+                        <div class="neuron" id="juanBrain">🤔</div>
+                    </div>
+                    
+                    <div class="connection" id="priceConn"></div>
+                    
+                    <div class="layer">
+                        <div class="layer-label">Precio Sugerido</div>
+                        <div class="neuron" id="priceNeuron">💰</div>
+                    </div>
+                </div>
+                
+                <div class="result-display" id="empanadaResult">
+                    💰 Precio sugerido: $2,500 pesos
+                </div>
+            </div>
+            
+            <div class="explanation-box">
+                <p><strong>¿Cómo funciona?</strong> La neurona de Juan toma los ingredientes y la zona, los "pesa" según su importancia, y calcula el precio justo.</p>
+                <p>¡Mueve los controles y mira cómo cambia el precio! 🎮</p>
+            </div>
+            
+            <div class="navigation">
+                <button class="btn" onclick="prevSection()">⬅️ Anterior</button>
+                <button class="btn" onclick="nextSection()">Siguiente: ¿Cómo Aprende? 🎓</button>
+            </div>
+        </div>
+        
+        <!-- Sección 3: Entrenamiento y Backpropagation -->
+        <div class="section" id="section3">
+            <h2>🎓 ¿Cómo Aprende una Red Neuronal?</h2>
+            
+            <div class="explanation-box">
+                <p><strong>¡Es como aprender a andar en bicicleta!</strong></p>
+                <p>1️⃣ <strong>Intenta:</strong> La neurona da una respuesta</p>
+                <p>2️⃣ <strong>Se equivoca:</strong> Compara con la respuesta correcta</p>
+                <p>3️⃣ <strong>Ajusta:</strong> Cambia un poquito para mejorar</p>
+                <p>4️⃣ <strong>Repite:</strong> ¡Hasta que lo hace perfecto!</p>
+            </div>
+            
+            <div class="controls">
+                <h3>🏫 Entrenemos a Juan</h3>
+                <p>Vamos a mostrarle ejemplos de empanadas y sus precios correctos:</p>
+                
+                <div class="empanada-example">
+                    <div id="trainingExample">
+                        <p><strong>Ejemplo 1:</strong> Carne: 8, Queso: 6, Zona Exclusiva → Precio correcto: $4,000</p>
+                    </div>
+                    
+                    <div class="result-display">
+                        <p>Juan piensa que vale: <span id="juanGuess">$2,800</span></p>
+                        <p>Error: <span id="error" style="color: #FF6B6B;">-$1,200</span></p>
+                    </div>
+                    
+                    <button class="btn" onclick="trainStep()" id="trainBtn">🎯 ¡Entrenar un paso!</button>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="learningProgress"></div>
+                    </div>
+                    <p style="text-align: center;">Progreso de aprendizaje: <span id="progressText">0%</span></p>
+                </div>
+            </div>
+            
+            <div class="explanation-box">
+                <p><strong>¡Esto es el "Backpropagation"!</strong> 🔄</p>
+                <p>Cuando Juan se equivoca, el error viaja hacia atrás por todas sus conexiones, diciéndoles: "¡Ey, cambien un poquito para que la próxima vez sea mejor!"</p>
+            </div>
+            
+            <div class="navigation">
+                <button class="btn" onclick="prevSection()">⬅️ Anterior</button>
+                <button class="btn" onclick="nextSection()">Siguiente: Muchas Neuronas 🧠</button>
+            </div>
+        </div>
+        
+        <!-- Sección 4: Red Neuronal Completa -->
+        <div class="section" id="section4">
+            <h2>🧠 Una Red Neuronal Completa</h2>
+            
+            <div class="explanation-box">
+                <p><strong>¡Ahora imagina muchas neuronas trabajando juntas!</strong></p>
+                <p>Es como tener un equipo de amigos súper inteligentes, cada uno especializado en algo diferente, pero todos colaborando para tomar la mejor decisión.</p>
+            </div>
+            
+            <div class="neuron-visual" style="justify-content: space-around;">
+                <div class="layer">
+                    <div class="layer-label">Entrada</div>
+                    <div class="neuron" onclick="activateNetwork('input')">📊</div>
+                    <div class="neuron" onclick="activateNetwork('input')">📊</div>
+                    <div class="neuron" onclick="activateNetwork('input')">📊</div>
+                </div>
+                
+                <div class="layer">
+                    <div class="layer-label">Capa Oculta 1</div>
+                    <div class="neuron hidden-neuron">🔍</div>
+                    <div class="neuron hidden-neuron">🔍</div>
+                    <div class="neuron hidden-neuron">🔍</div>
+                    <div class="neuron hidden-neuron">🔍</div>
+                </div>
+                
+                <div class="layer">
+                    <div class="layer-label">Capa Oculta 2</div>
+                    <div class="neuron hidden-neuron">🎯</div>
+                    <div class="neuron hidden-neuron">🎯</div>
+                    <div class="neuron hidden-neuron">🎯</div>
+                </div>
+                
+                <div class="layer">
+                    <div class="layer-label">Salida</div>
+                    <div class="neuron output-neuron">✨</div>
+                </div>
+            </div>
+            
+            <button class="btn" onclick="demonstrateNetwork()" id="networkBtn">🚀 ¡Ver la red en acción!</button>
+            
+            <div class="explanation-box">
+                <p><strong>¿Qué hacen las capas ocultas?</strong></p>
+                <p>🔍 <strong>Primera capa:</strong> Detecta patrones básicos</p>
+                <p>🎯 <strong>Segunda capa:</strong> Combina patrones para decisiones complejas</p>
+                <p>✨ <strong>Salida:</strong> Da la respuesta final</p>
+            </div>
+            
+            <div class="navigation">
+                <button class="btn" onclick="prevSection()">⬅️ Anterior</button>
+                <button class="btn" onclick="nextSection()">Siguiente: ¡Reconoce Caras! 👦👧</button>
+            </div>
+        </div>
+        
+        <!-- Sección 5: Reconocimiento de caras -->
+        <div class="section" id="section5">
+            <h2>👦👧 ¡Reconocimiento de Caras!</h2>
+            
+            <div class="explanation-box">
+                <p><strong>¡Ahora viene lo más genial!</strong> 🎨</p>
+                <p>Vas a dibujar una cara súper simple y nuestra red neuronal tratará de reconocerla.</p>
+                <p>¡Dibuja solo círculos para ojos, una línea para la boca, y ya verás la magia!</p>
+            </div>
+            
+            <div class="canvas-area">
+                <div>
+                    <canvas id="drawCanvas" width="300" height="300"></canvas>
+                    <div style="text-align: center; margin-top: 10px;">
+                        <button class="btn" onclick="clearCanvas()">🧽 Borrar</button>
+                        <button class="btn" onclick="recognizeFace()">🔍 ¡Reconocer!</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="result-display" id="recognitionResult">
+                🤖 Dibuja una cara y presiona "¡Reconocer!" para ver qué piensa la red neuronal
+            </div>
+            
+            <div class="neuron-visual" style="margin-top: 30px;">
+                <div class="layer">
+                    <div class="layer-label">Tu Dibujo</div>
+                    <div class="neuron">🎨</div>
+                </div>
+                
+                <div class="connection" id="faceConn1"></div>
+                
+                <div class="layer">
+                    <div class="layer-label">Detectores</div>
+                    <div class="neuron face-detector" title="Detector de ojos">👁️</div>
+                    <div class="neuron face-detector" title="Detector de boca">👄</div>
+                    <div class="neuron face-detector" title="Detector de forma">⭕</div>
+                </div>
+                
+                <div class="connection" id="faceConn2"></div>
+                
+                <div class="layer">
+                    <div class="layer-label">¿Es una cara?</div>
+                    <div class="neuron" id="faceResult">❓</div>
+                </div>
+            </div>
+            
+            <div class="explanation-box">
+                <p><strong>¿Cómo funciona el reconocimiento?</strong></p>
+                <p>👁️ Busca formas redondas (ojos)</p>
+                <p>👄 Busca líneas horizontales (boca)</p>
+                <p>⭕ Verifica que todo esté en posición de cara</p>
+                <p>¡Si encuentra estos patrones, dice "¡Es una cara!" 😊</p>
+            </div>
+            
+            <div class="navigation">
+                <button class="btn" onclick="prevSection()">⬅️ Anterior</button>
+                <button class="btn" onclick="nextSection()">Siguiente: ¡Lo lograste! 🎉</button>
+            </div>
+        </div>
+        
+        <!-- Sección 6: Conclusión -->
+        <div class="section" id="section6">
+            <h2>🎉 ¡Felicitaciones, Expert@ en Redes Neuronales!</h2>
+            
+            <div class="explanation-box" style="text-align: center;">
+                <h3>🏆 Lo que aprendiste hoy:</h3>
+                <p>✅ Qué es una neurona artificial (¡como un amigo inteligente!)</p>
+                <p>✅ Cómo ayudan a Juan con sus empanadas</p>
+                <p>✅ Cómo aprenden con ejemplos (backpropagation)</p>
+                <p>✅ Cómo trabajan muchas neuronas juntas</p>
+                <p>✅ Cómo reconocen patrones como caras</p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+                <div style="font-size: 4em; margin: 20px 0;">🧠🤖✨</div>
+                <h3>¡Las redes neuronales están en todas partes!</h3>
+                <p>📱 En tu teléfono (reconociendo tu voz)</p>
+                <p>🎵 En Spotify (recomendando música)</p>
+                <p>🚗 En los autos inteligentes</p>
+                <p>🏥 Ayudando a los doctores</p>
+                <p>🎮 En los videojuegos</p>
+            </div>
+            
+            <div class="controls">
+                <h3>🎮 ¡Sigue explorando!</h3>
+                <button class="btn" onclick="goToSection(1)">🔄 Volver al inicio</button>
+                <button class="btn" onclick="goToSection(2)">🥟 Jugar con Juan</button>
+                <button class="btn" onclick="goToSection(5)">🎨 Dibujar más caras</button>
+            </div>
+            
+            <div class="explanation-box">
+                <p style="text-align: center;"><strong>¿Sabías que...?</strong></p>
+                <p>🤯 Una red neuronal puede tener millones de neuronas artificiales</p>
+                <p>⚡ Aprenden súper rápido con miles de ejemplos</p>
+                <p>🎯 Cada día se vuelven más inteligentes</p>
+                <p>🚀 ¡Tú podrías crear la próxima gran red neuronal!</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentSection = 1;
+        const maxSections = 6;
+        let trainingStep = 0;
+        let isDrawing = false;
+        let canvas, ctx;
+        
+        // Inicialización
+        window.addEventListener('load', function() {
+            canvas = document.getElementById('drawCanvas');
+            if (canvas) {
+                ctx = canvas.getContext('2d');
+                setupCanvas();
+            }
+            updateEmpanada();
+        });
+        
+        // Navegación entre secciones
+        function nextSection() {
+            if (currentSection < maxSections) {
+                document.getElementById(`section${currentSection}`).classList.remove('active');
+                currentSection++;
+                document.getElementById(`section${currentSection}`).classList.add('active');
+            }
+        }
+        
+        function prevSection() {
+            if (currentSection > 1) {
+                document.getElementById(`section${currentSection}`).classList.remove('active');
+                currentSection--;
+                document.getElementById(`section${currentSection}`).classList.add('active');
+            }
+        }
+        
+        function goToSection(section) {
+            document.getElementById(`section${currentSection}`).classList.remove('active');
+            currentSection = section;
+            document.getElementById(`section${currentSection}`).classList.add('active');
+        }
+        
+        // Funcionalidad de la primera neurona
+        function activateNeuron(inputId) {
+            // Activar conexión
+            const connections = ['conn1', 'conn2', 'conn3'];
+            connections.forEach(conn => {
+                document.getElementById(conn).classList.remove('active', 'strong');
+            });
+            
+            const connIndex = inputId === 'input1' ? 0 : inputId === 'input2' ? 1 : 2;
+            const connection = document.getElementById(connections[connIndex]);
+            connection.classList.add('active', 'strong');
+            
+            // Activar neurona principal
+            const mainNeuron = document.getElementById('mainNeuron');
+            mainNeuron.classList.add('active');
+            
+            // Activar salida después de un delay
+            setTimeout(() => {
+                document.getElementById('outputConn').classList.add('active', 'strong');
+                const outputNeuron = document.getElementById('outputNeuron');
+                outputNeuron.classList.add('active');
+                outputNeuron.textContent = ['☀️', '🕐', '📍'][connIndex] + '✓';
+            }, 500);
+            
+            // Reset después de 2 segundos
+            setTimeout(() => {
+                document.querySelectorAll('.neuron').forEach(n => n.classList.remove('active'));
+                document.querySelectorAll('.connection').forEach(c => c.classList.remove('active', 'strong'));
+                document.getElementById('outputNeuron').textContent = '❓';
+            }, 2000);
+        }
+        
+        // Funcionalidad del vendedor de empanadas
+        function updateEmpanada() {
+            const meat = parseInt(document.getElementById('meat').value);
+            const cheese = parseInt(document.getElementById('cheese').value);
+            const zone = parseInt(document.getElementById('zone').value);
+            
+            // Actualizar valores mostrados
+            document.getElementById('meatValue').textContent = meat;
+            document.getElementById('cheeseValue').textContent = cheese;
+            
+            let zoneText = '';
+            if (zone <= 3) zoneText = zone + ' - Zona Popular';
+            else if (zone <= 7) zoneText = zone + ' - Zona Media';
+            else zoneText = zone + ' - Zona Exclusiva';
+            document.getElementById('zoneValue').textContent = zoneText;
+            
+            // Calcular precio (fórmula simple)
+            const basePrice = 1000;
+            const price = basePrice + (meat * 200) + (cheese * 150) + (zone * 100);
+            
+            // Actualizar visual de neuronas
+            const meatNeuron = document.getElementById('meatNeuron');
+            const cheeseNeuron = document.getElementById('cheeseNeuron');
+            const zoneNeuron = document.getElementById('zoneNeuron');
+            
+            meatNeuron.style.opacity = 0.3 + (meat / 10) * 0.7;
+            cheeseNeuron.style.opacity = 0.3 + (cheese / 10) * 0.7;
+            zoneNeuron.style.opacity = 0.3 + (zone / 10) * 0.7;
+            
+            // Actualizar conexiones
+            const connections = ['meatConn', 'cheeseConn', 'zoneConn'];
+            const values = [meat, cheese, zone];
+            
+            connections.forEach((connId, index) => {
+                const conn = document.getElementById(connId);
+                if (values[index] > 6) {
+                    conn.classList.add('strong');
+                    conn.classList.remove('weak');
+                } else if (values[index] < 4) {
+                    conn.classList.add('weak');
+                    conn.classList.remove('strong');
+                } else {
+                    conn.classList.remove('strong', 'weak');
+                }
+            });
+            
+            // Mostrar resultado
+            document.getElementById('empanadaResult').innerHTML = 
+                `💰 Precio sugerido: ${price.toLocaleString()} pesos`;
+        }
+        
+        // Funcionalidad de entrenamiento
+        let currentTrainingStep = 0;
+        const trainingData = [
+            { meat: 8, cheese: 6, zone: 9, correctPrice: 4000 },
+            { meat: 3, cheese: 2, zone: 2, correctPrice: 1800 },
+            { meat: 6, cheese: 5, zone: 5, correctPrice: 2800 },
+            { meat: 9, cheese: 8, zone: 10, correctPrice: 4500 },
+            { meat: 4, cheese: 3, zone: 3, correctPrice: 2200 }
+        ];
+        
+        function trainStep() {
+            if (currentTrainingStep >= trainingData.length) {
+                document.getElementById('trainBtn').textContent = '🎉 ¡Entrenamiento Completado!';
+                document.getElementById('trainBtn').disabled = true;
+                document.getElementById('progressText').textContent = '100% - ¡Juan ya es un experto!';
+                return;
+            }
+            
+            const example = trainingData[currentTrainingStep];
+            const basePrice = 1000;
+            const aiGuess = basePrice + (example.meat * 200) + (example.cheese * 150) + (example.zone * 100);
+            const error = aiGuess - example.correctPrice;
+            
+            // Actualizar display
+            document.getElementById('trainingExample').innerHTML = 
+                `<strong>Ejemplo ${currentTrainingStep + 1}:</strong> Carne: ${example.meat}, Queso: ${example.cheese}, Zona: ${example.zone} → Precio correcto: ${example.correctPrice.toLocaleString()}`;
+            
+            document.getElementById('juanGuess').textContent = `${aiGuess.toLocaleString()}`;
+            document.getElementById('error').textContent = error > 0 ? `+${error.toLocaleString()}` : `${error.toLocaleString()}`;
+            document.getElementById('error').style.color = error === 0 ? '#00FF00' : '#FF6B6B';
+            
+            // Actualizar progreso
+            currentTrainingStep++;
+            const progress = (currentTrainingStep / trainingData.length) * 100;
+            document.getElementById('learningProgress').style.width = progress + '%';
+            document.getElementById('progressText').textContent = Math.round(progress) + '%';
+            
+            if (currentTrainingStep >= trainingData.length) {
+                setTimeout(() => {
+                    document.getElementById('trainBtn').textContent = '🎉 ¡Entrenamiento Completado!';
+                    document.getElementById('trainBtn').disabled = true;
+                    document.getElementById('progressText').textContent = '100% - ¡Juan ya es un experto!';
+                }, 1000);
+            }
+        }
+        
+        // Funcionalidad de red neuronal completa
+        function demonstrateNetwork() {
+            const hiddenNeurons = document.querySelectorAll('.hidden-neuron');
+            const outputNeuron = document.querySelector('.output-neuron');
+            const networkBtn = document.getElementById('networkBtn');
+            
+            networkBtn.textContent = '🔄 Procesando...';
+            networkBtn.disabled = true;
+            
+            // Activar neuronas por capas
+            setTimeout(() => {
+                hiddenNeurons.forEach((neuron, index) => {
+                    setTimeout(() => {
+                        neuron.classList.add('active');
+                    }, index * 200);
+                });
+            }, 500);
+            
+            setTimeout(() => {
+                outputNeuron.classList.add('active');
+                networkBtn.textContent = '✨ ¡Red Activada!';
+            }, 2000);
+            
+            // Reset
+            setTimeout(() => {
+                document.querySelectorAll('.neuron').forEach(n => n.classList.remove('active'));
+                networkBtn.textContent = '🚀 ¡Ver la red en acción!';
+                networkBtn.disabled = false;
+            }, 4000);
+        }
+        
+        // Funcionalidad del canvas para dibujar caras
+        function setupCanvas() {
+            if (!canvas || !ctx) return;
+            
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            
+            // Event listeners para dibujar
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            // Touch events para móviles
+            canvas.addEventListener('touchstart', handleTouch);
+            canvas.addEventListener('touchmove', handleTouch);
+            canvas.addEventListener('touchend', stopDrawing);
+        }
+        
+        function startDrawing(e) {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+        
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        }
+        
+        function stopDrawing() {
+            isDrawing = false;
+        }
+        
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 
+                e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        }
+        
+        function clearCanvas() {
+            if (!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('recognitionResult').textContent = 
+                '🤖 Dibuja una cara y presiona "¡Reconocer!" para ver qué piensa la red neuronal';
+            document.getElementById('faceResult').textContent = '❓';
+            document.querySelectorAll('.face-detector').forEach(n => n.classList.remove('active'));
+        }
+        
+        function recognizeFace() {
+            if (!ctx) return;
+            
+            // Analizar el canvas (simulación simple)
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            let hasDrawing = false;
+            for (let i = 3; i < data.length; i += 4) {
+                if (data[i] > 0) {
+                    hasDrawing = true;
+                    break;
+                }
+            }
+            
+            if (!hasDrawing) {
+                document.getElementById('recognitionResult').innerHTML = 
+                    '🤔 ¡No veo nada! Dibuja algo primero.';
+                return;
+            }
+            
+            // Simular reconocimiento
+            const detectors = document.querySelectorAll('.face-detector');
+            const resultNeuron = document.getElementById('faceResult');
+            
+            // Activar detectores uno por uno
+            detectors.forEach((detector, index) => {
+                setTimeout(() => {
+                    detector.classList.add('active');
+                }, index * 500);
+            });
+            
+            // Resultado final
+            setTimeout(() => {
+                const isFace = Math.random() > 0.3; // 70% chance de reconocer como cara
+                
+                if (isFace) {
+                    resultNeuron.textContent = '😊';
+                    resultNeuron.classList.add('active');
+                    document.getElementById('recognitionResult').innerHTML = 
+                        '🎉 ¡Genial! La red neuronal dice: "¡Es una cara!" 😊<br>¡Detectó formas redondas y líneas que parecen ojos y boca!';
+                } else {
+                    resultNeuron.textContent = '🤔';
+                    document.getElementById('recognitionResult').innerHTML = 
+                        '🤔 Hmm... La red neuronal no está segura si es una cara.<br>¡Intenta dibujar dos círculos para los ojos y una línea para la boca!';
+                }
+                
+                // Activar conexiones
+                document.getElementById('faceConn1').classList.add('active', 'strong');
+                document.getElementById('faceConn2').classList.add('active', 'strong');
+            }, 2000);
+            
+            // Reset visual después de 5 segundos
+            setTimeout(() => {
+                detectors.forEach(d => d.classList.remove('active'));
+                resultNeuron.classList.remove('active');
+                document.querySelectorAll('#faceConn1, #faceConn2').forEach(c => 
+                    c.classList.remove('active', 'strong'));
+            }, 7000);
+        }
+        
+        // Funcionalidad de activación de red para sección 4
+        function activateNetwork(type) {
+            const inputNeurons = document.querySelectorAll('.neuron-visual .layer:first-child .neuron');
+            const hiddenNeurons = document.querySelectorAll('.hidden-neuron');
+            const outputNeuron = document.querySelector('.output-neuron');
+            
+            // Activar neuronas de entrada
+            inputNeurons.forEach(neuron => neuron.classList.add('active'));
+            
+            // Activar capas ocultas progresivamente
+            setTimeout(() => {
+                hiddenNeurons.forEach((neuron, index) => {
+                    setTimeout(() => {
+                        neuron.classList.add('active');
+                    }, index * 100);
+                });
+            }, 300);
+            
+            // Activar salida
+            setTimeout(() => {
+                outputNeuron.classList.add('active');
+            }, 1500);
+            
+            // Reset
+            setTimeout(() => {
+                document.querySelectorAll('.neuron').forEach(n => n.classList.remove('active'));
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
